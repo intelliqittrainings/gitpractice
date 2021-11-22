@@ -1,0 +1,136 @@
+Day 1
+==================================================================
+
+Ansible Docker Integrations
+=================================
+Ansible playbook to setup docker on all machines
+---
+- name: Setup of Docker
+  hosts: all
+  tasks:
+   - name: Install python-pip
+     apt:
+      name: python-pip
+      state: present
+      update_cache: yes
+   - name: Download docker script and install docker and install docker-py
+     shell: "{{item}}"
+     with_items:
+      - curl -fsSL https://get.docker.com -o get-docker.sh
+      - sh get-docker.sh
+      - pip install docker-py
+...
+
+===========================================================================
+Ansible playbook to start stop and delete a tomcat container
+---
+- name: Working on containers
+  hosts: all
+  tasks:
+   - name: Start a tomcat container
+     docker_container:
+      image: tomcat
+      name: webserver
+   - name: Stop the tomcat container
+     docker_container:
+      name: webserver
+      state: stopped
+   - name: Remove the tomcat container
+     docker_container:
+      name: webserver
+      state: absent
+...
+
+===========================================================================
+Ansible playbook to create multiple nginx containers on all servers
+---
+- name: Create 10 nginx contianers for load balancing
+  hosts: all
+  tasks:
+   - name: Create 10 containers
+     docker_container:
+      image: nginx
+      name: "container{{item}}"
+     with_sequence: count=10
+...
+
+=============================================================================
+---
+- name: Create an ubuntu container and mount a volume
+  hosts: all
+  tasks:
+   - name: Create a ubuntu container
+     docker_container:
+      name: myubuntu
+      image: ubuntu
+      volumes:
+       - /data
+      interactive: yes
+      tty: yes
+
+==========================================================================
+Ansible playbook to create a multi container architecture on all managed nodes
+---
+- name: Implementing docker compose using Ansible
+  hosts: all
+  tasks:
+   - name: Create a mysql container
+     docker_container:
+      image: mysql:5
+      name: db
+      env:
+       MYSQL_ROOT_PASSWORD: intelliqit
+
+   - name: Create a wordpress container and link it with the mysql container
+     docker_container:
+      image: wordpress
+      name: mywordpress
+      ports:
+       - 8888:80
+      links:
+       - db:mysql
+...
+
+
+================================================================================
+---
+- name: Creating jenkins-tomcat setup for  CI-CD using docker/ansible
+  hosts: all
+  tasks:
+   - name: Create a jenkins contianer
+     docker_container:
+      image: jenkins
+      name: myjenkins
+      ports:
+       - 5050:8080
+
+   - name: Create a tomcat for QAServer and ProdServer
+     docker_container:
+      image: tomcat
+      name: "{{item.a}}"
+      ports:
+       - "{{item.b}}"
+      links:
+       - myjenkins:jenkins
+     with_items:
+      - {a: qaserver,b: "6060:8080"}
+      - {a: prodserver,b: "7070:8080"}
+
+=======================================================================
+
+======================================================================
+---
+- name: Ansible playbook to Download docker images
+  hosts: all
+  tasks:
+   - name: Docker docker images
+     docker_image:
+      name: "{{item}}"
+     with_items:
+      - httpd
+      - nginx
+      - centos
+      - jenkins
+...
+
+============================================================================
